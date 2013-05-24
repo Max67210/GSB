@@ -94,7 +94,7 @@ function creationFichesFrais($pdo)
 			$dateModif = $numAnnee."-".$numMois."-".rand(1,8);
 			$nbJustificatifs = rand(0,12);
 			$req = "insert into fichefrais(idvisiteur,mois,nbJustificatifs,montantValide,dateModif,idEtat) 
-			values ('$idVisiteur','$moisCourant',$nbJustificatifs,0,'$dateModif','$etat')";
+			values ('$idVisiteur','$moisCourant',$nbJustificatifs,0,to_date('$dateModif','yyyy-mm-dd'),'$etat')";
                         //echo $req."<br/>";
 			$pdo->exec($req);
 			$moisCourant = getMoisPrecedent($moisCourant);
@@ -198,8 +198,8 @@ function updateMdpVisiteur($pdo)
 			}
 			
 			$req = "update visiteur set mdp ='$mdp' where visiteur.id ='$id' ";
-                        echo $req;
-			//$pdo->exec($req);
+                        //echo $req;
+			$pdo->exec($req);
 		}
 
 
@@ -218,9 +218,9 @@ function creationFraisHorsForfait($pdo)
 		{
 			$hasardNumfrais = rand(1,count($desFrais)); 
 			$frais = $desFrais[$hasardNumfrais];
-			$lib = $frais['LIB'];
-			$min= $frais['MIN'];
-			$max = $frais['MAX'];
+			$lib = $frais['lib'];
+			$min= $frais['min'];
+			$max = $frais['max'];
 			$hasardMontant = rand($min,$max);
 			$numAnnee =substr( $mois,0,4);
 			$numMois =substr( $mois,4,2);
@@ -230,9 +230,10 @@ function creationFraisHorsForfait($pdo)
 				$hasardJour="0".$hasardJour;
 			}
 			$hasardMois = $numAnnee."-".$numMois."-".$hasardJour;
-			$req = "insert into lignefraishorsforfait(idVisiteur,mois,libelle,date,montant)
-			values('$idVisiteur','$mois','$lib','$hasardMois',$hasardMontant)";
-			$pdo->exec($req);
+			$req = "insert into lignefraishorsforfait(idVisiteur,mois,libelle,laDate,montant)
+			values('$idVisiteur','$mois','$lib',to_date('$hasardMois','yyyy-mm-dd'),$hasardMontant)";
+			//echo $req."<br/>";
+                        $pdo->exec($req);
 		}
 	}
 }
@@ -264,13 +265,15 @@ function majFicheFrais($pdo)
 		$ligne = $res->fetch();
 		$cumulMontantForfait = $ligne['CUMUL'];
 		$montantEngage = $cumulMontantHorsForfait + $cumulMontantForfait;
-		$etat = $uneFicheFrais['ID'];
+		$etat = $uneFicheFrais['IDETAT'];
 		if($etat == "CR" )
 			$montantValide = 0;
 		else
 			$montantValide = $montantEngage*rand(80,100)/100;
+                $montantValide = str_replace(',', '.', $montantValide);          
 		$req = "update fichefrais set montantValide =$montantValide where
 		idVisiteur = '$idVisiteur' and mois='$mois'";
+                //echo $req."<br/>";
 		$pdo->exec($req);
 		
 	}
